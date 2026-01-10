@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyberboy-battery"
+version = "1.0.0"
+description = "Battery monitoring suite for Raspberry Pi with INA219 sensor"
+readme = "README.md"
+license = {text = "CC-BY-NC-SA-4.0"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Alfonso"}
+]
+keywords = ["raspberry-pi", "battery", "ina219", "ups", "monitoring"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "pi-ina219>=1.4.0",
+    "PyGObject>=3.42.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+]
+
+[project.urls]
+Homepage = "https://github.com/alfonso/cyberboy-battery"
+Repository = "https://github.com/alfonso/cyberboy-battery"
+Issues = "https://github.com/alfonso/cyberboy-battery/issues"
+
+[project.scripts]
+cyberboy-battery-tray = "cyberboy_battery.tray:main"
+cyberboy-battery-overlay = "cyberboy_battery.overlay:main"
+cyberboy-battery-shutdown = "cyberboy_battery.shutdown:main"
+cyberboy-battery-status = "cyberboy_battery.status:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
