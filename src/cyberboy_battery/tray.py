@@ -1,15 +1,18 @@
+#!/usr/bin/env python3
 """
 UPS Battery Tray Indicator for Raspberry Pi.
 Uses hybrid SOC (coulomb counting + voltage calibration).
+This is the authoritative battery daemon - writes state to shared file for other UIs.
 """
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 gi.require_version("AyatanaAppIndicator3", "0.1")
 from gi.repository import Gtk, AyatanaAppIndicator3, GLib
 
 from ina219 import INA219, DeviceRangeError
+import json
+import os
 
 from .learning import (
     get_battery_learning,
@@ -20,7 +23,12 @@ from .learning import (
     NOMINAL_CAPACITY_MAH,
     LOW_VOLTAGE_WARN,
     CRITICAL_VOLTAGE,
+    VOLT_MIN,
+    VOLT_MAX,
 )
+
+# Shared state file for other UIs (overlay, status) to read
+BATTERY_STATE_FILE = "/tmp/cyberboy_battery_state.json"
 
 
 class UPSIndicator:
@@ -119,6 +127,24 @@ class UPSIndicator:
             return f"battery-{level}-charging"
         return f"battery-{level}"
 
+    def _write_shared_state(self, percent, voltage, current, power, charging, time_str):
+        """Write battery state to shared file for other UIs to read."""
+        try:
+            state = {
+                "percent": percent,
+                "voltage": voltage,
+                "current": current,
+                "power": power,
+                "charging": charging,
+                "time_str": time_str or "",
+            }
+            tmp_file = BATTERY_STATE_FILE + ".tmp"
+            with open(tmp_file, "w") as f:
+                json.dump(state, f)
+            os.rename(tmp_file, BATTERY_STATE_FILE)
+        except Exception:
+            pass
+
     def update(self) -> bool:
         """Update the indicator with current battery status."""
         if not self.ina_ok:
@@ -175,6 +201,9 @@ class UPSIndicator:
                 f"(nom: {stats['nominal_capacity_mah']})"
             )
             self.cycles_item.set_label(f"Cycles tracked: {stats['cycle_count']}")
+
+            # Write state to shared file for other UIs
+            self._write_shared_state(percent, voltage, current, power, charging, time_str)
 
         except DeviceRangeError:
             self.indicator.set_label("OVR", "")

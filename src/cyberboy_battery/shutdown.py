@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Battery Safe Shutdown Daemon.
 Monitors battery voltage and initiates safe shutdown at critical level.

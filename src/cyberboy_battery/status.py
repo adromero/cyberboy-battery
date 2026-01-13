@@ -1,47 +1,37 @@
+#!/usr/bin/env python3
 """
 Battery status helper for conky and other scripts.
 Outputs battery info with time remaining.
+Reads state from tray daemon via shared file.
 """
 
 import sys
+import json
 
-try:
-    from ina219 import INA219
-except ImportError:
-    print("> N/A")
-    sys.exit(0)
-
-from .learning import (
-    get_battery_learning,
-    get_hybrid_soc,
-    SHUNT_OHMS,
-    I2C_ADDRESS,
-    I2C_BUS,
-)
+# Shared state file written by tray daemon
+BATTERY_STATE_FILE = "/tmp/cyberboy_battery_state.json"
 
 
 def main():
     """Entry point for battery status output."""
     try:
-        ina = INA219(SHUNT_OHMS, address=I2C_ADDRESS, busnum=I2C_BUS)
-        ina.configure()
-        voltage = ina.voltage()
-        current = ina.current()
-        power = ina.power()
+        with open(BATTERY_STATE_FILE, "r") as f:
+            state = json.load(f)
 
-        percent = get_hybrid_soc(voltage, current, power)
-
-        bl = get_battery_learning()
-        charging = bl.is_charging()
+        percent = state.get("percent", 0)
+        charging = state.get("charging", False)
+        time_str = state.get("time_str", "")
 
         status = " CHG" if charging else ""
-        time_str = bl.format_time_remaining(percent, current)
 
         # Output formatted for conky
         print(f"> {percent:.0f}%{status}")
         if time_str:
             print(f"${{color4}}  {time_str}")
 
+    except FileNotFoundError:
+        print("> N/A")
+        print("${color4}  No battery daemon")
     except Exception:
         print("> ERR")
 

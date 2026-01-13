@@ -1,20 +1,23 @@
+#!/usr/bin/env python3
 """
 Battery Learning Module - Hybrid SOC using coulomb counting + voltage calibration.
 Tracks discharge patterns and estimates time remaining.
 Learns from actual usage to improve accuracy over time.
 """
 
-import csv
 import json
-import subprocess
+import os
 import time
-from collections import deque
-from datetime import datetime
+import csv
+import subprocess
 from pathlib import Path
+from collections import deque
 from threading import Lock
+from datetime import datetime
 
 # Data storage location
 DATA_DIR = Path.home() / ".local" / "share" / "cyberboy-battery"
+HISTORY_FILE = DATA_DIR / "discharge_history.json"
 LEARNED_FILE = DATA_DIR / "learned_data.json"
 CSV_LOG_DIR = DATA_DIR / "logs"
 
@@ -129,8 +132,8 @@ class BatteryLearning:
 
         # Charge state tracking
         self._is_charging = False
-        self._charge_state_changed_time = None
-        self._voltage_settled = False
+        self._charge_state_changed_time = time.time() - 60  # Start as "settled"
+        self._voltage_settled = True  # Assume settled on startup
 
         # Notification tracking (don't repeat warnings)
         self._warnings_sent = set()

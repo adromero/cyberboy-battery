@@ -9,7 +9,7 @@ This package provides:
 - CSV logging for battery analysis
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Alfonso"
 
 from .learning import (
