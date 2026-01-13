@@ -36,9 +36,10 @@ class UPSIndicator:
 
     def __init__(self):
         self.indicator = AyatanaAppIndicator3.Indicator.new(
-            "ups-battery", "battery-full", AyatanaAppIndicator3.IndicatorCategory.HARDWARE
+            "ups-battery", "battery-good", AyatanaAppIndicator3.IndicatorCategory.HARDWARE
         )
         self.indicator.set_status(AyatanaAppIndicator3.IndicatorStatus.ACTIVE)
+        self.indicator.set_title("Battery: --%")
 
         self.learning = get_battery_learning()
         self._build_menu()

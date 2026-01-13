@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cyberboy-battery"
-version = "1.1.0"
+version = "1.1.1"
 description = "Battery monitoring suite for Raspberry Pi with INA219 sensor"
 readme = "README.md"
 license = {text = "CC-BY-NC-SA-4.0"}
