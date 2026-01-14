@@ -1,6 +1,6 @@
 # Cyberboy Battery
 
-Battery monitoring suite for Raspberry Pi with INA219 current/voltage sensor. Designed for DIY UPS builds using Li-ion battery packs.
+Battery monitoring suite for Raspberry Pi with INA219 current/voltage sensor. Designed for the **Waveshare UPS Module 3S** and other DIY UPS builds using 3S Li-ion battery packs.
 
 ## Safety Warning
 
@@ -32,16 +32,21 @@ This software provides battery monitoring only. It does not replace proper hardw
 ## Hardware Requirements
 
 - Raspberry Pi (tested on Pi 5)
-- INA219 current/voltage sensor
-- Li-ion battery pack (default config is 3S, 9.0V-12.6V)
+- **Waveshare UPS Module 3S** (recommended) or compatible INA219-based UPS
+- 3x 18650 Li-ion batteries (3S configuration, 9.0V-12.6V)
 
-### Default INA219 Configuration
+### Waveshare UPS Module 3S
+
+This software is optimized for the [Waveshare UPS Module 3S](https://www.waveshare.com/wiki/UPS_Module_3S):
 
 | Parameter | Value |
 |-----------|-------|
 | I2C Address | 0x41 |
 | I2C Bus | 1 |
-| Shunt Resistor | 0.1 ohm |
+| Battery Config | 3S (9V-12.6V) |
+| Max Output | 5V 5A |
+
+**Important:** This software reads the INA219 current register directly using the factory calibration. The `pi-ina219` library is **not required** and should not be used, as it reconfigures the INA219 and produces incorrect readings.
 
 ## Installation
 
@@ -61,8 +66,10 @@ sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 \
     gir1.2-ayatanaappindicator3-0.1 gir1.2-gtk-layer-shell-0.1
 
 # Python packages
-pip install pi-ina219
+pip install smbus2
 ```
+
+Note: The `pi-ina219` library is **not required**. This software reads INA219 registers directly to preserve the Waveshare factory calibration.
 
 ## Usage
 
@@ -116,8 +123,7 @@ Edit `src/cyberboy_battery/learning.py` to customize:
 
 ```python
 # Battery configuration
-NOMINAL_CAPACITY_MAH = 3400  # Your battery capacity
-SHUNT_OHMS = 0.1             # Your shunt resistor value
+NOMINAL_CAPACITY_MAH = 3400  # Your battery capacity (mAh)
 I2C_ADDRESS = 0x41           # Your INA219 address
 I2C_BUS = 1                  # Your I2C bus
 
@@ -125,6 +131,9 @@ I2C_BUS = 1                  # Your I2C bus
 VOLT_MIN = 9.0               # Empty voltage
 VOLT_MAX = 12.6              # Full voltage
 CRITICAL_VOLTAGE = 9.6       # Shutdown threshold
+
+# INA219 calibration (Waveshare UPS 3S default)
+INA219_CURRENT_LSB_MA = 0.1  # Current register LSB in mA
 ```
 
 ## Data Storage
@@ -151,10 +160,10 @@ This implementation uses a hybrid approach:
 
 ### "Battery drops from 100% to 60% instantly after unplugging"
 
-This is the charging voltage vs. actual battery voltage difference. The hybrid SOC addresses this by:
-- Not showing >90% unless voltage confirms it
-- Waiting 30 seconds after unplug before trusting voltage readings
-- Using coulomb counting during transitions
+This was a known issue that has been fixed. The software now:
+- Waits 5 minutes after unplugging before blending toward voltage SOC (grace period)
+- Uses gentler drift correction (0.2% per sample instead of 1%)
+- Applies load compensation to voltage readings for full-charge calibration
 
 ### INA219 Not Found
 
@@ -165,9 +174,13 @@ i2cdetect -y 1
 
 Your INA219 should appear at the configured address (default 0x41).
 
-### Low Current Readings
+### Low Current/Power Readings (showing ~70mA instead of ~500mA)
 
-The INA219 only measures current through the shunt resistor. If your wiring bypasses the shunt for some loads, readings will be lower than actual consumption.
+If you see unrealistically low current readings, you may be using the `pi-ina219` library which reconfigures the INA219 with incorrect calibration. This software reads registers directly - ensure you're using the latest version and not importing from `ina219`.
+
+### Other UPS Modules
+
+If using a different INA219-based UPS module, you may need to adjust `INA219_CURRENT_LSB_MA` in `learning.py` to match your module's calibration. Check your module's documentation or experiment with values until current readings match expected consumption (~500-1000mA for Pi 5 with display).
 
 ## License
 

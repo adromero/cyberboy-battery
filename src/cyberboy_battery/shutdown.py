@@ -10,18 +10,10 @@ import subprocess
 import sys
 import time
 
-try:
-    from ina219 import INA219
-except ImportError:
-    print("Error: ina219 library not found", file=sys.stderr)
-    sys.exit(1)
-
 from .learning import (
     get_battery_learning,
     get_hybrid_soc,
-    SHUNT_OHMS,
-    I2C_ADDRESS,
-    I2C_BUS,
+    get_ina219_reader,
     CRITICAL_VOLTAGE,
 )
 
@@ -118,8 +110,7 @@ def main():
     print(f"Shutdown thresholds: {SHUTDOWN_VOLTAGE}V / {SHUTDOWN_PERCENT}%")
 
     try:
-        ina = INA219(SHUNT_OHMS, address=I2C_ADDRESS, busnum=I2C_BUS)
-        ina.configure()
+        ina = get_ina219_reader()
     except Exception as e:
         print(f"Error initializing INA219: {e}", file=sys.stderr)
         cleanup()
